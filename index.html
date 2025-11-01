@@ -1,203 +1,241 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تطبيق تعديل وتصوير المنتجات</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تطبيق تصوير المنتجات الكامل</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
+<style>
+  body { transition: background 0.3s; }
+  canvas { max-width: 100%; height: auto; border-radius: 10px; cursor: grab; }
+</style>
 </head>
-
 <body class="bg-gray-100 text-center min-h-screen p-4">
-  <h1 class="text-2xl font-bold mb-4 text-indigo-700">📸 تطبيق تصوير وتعديل المنتجات بالذكاء الاصطناعي</h1>
 
-  <!-- إدخال الصورة -->
-  <input type="file" id="imageInput" accept="image/*" class="mb-4" />
-  <button id="cameraBtn" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4">📷 استخدام الكاميرا</button>
+<script>
+  // رمز الدخول
+  const password = "12300"; 
+  let entered = prompt("🔒 أدخل رمز الدخول للوصول إلى الموقع:");
+  while (entered !== password) {
+    if (entered === null) { alert("🚫 لا يمكن الدخول بدون الرمز!"); window.close(); break; }
+    entered = prompt("❌ الرمز خاطئ، حاول مرة أخرى:");
+  }
+</script>
 
-  <!-- الصورة -->
-  <div class="flex justify-center mb-4">
-    <canvas id="canvas" class="border border-gray-400 rounded-lg shadow-md max-w-full"></canvas>
-  </div>
+<h1 class="text-2xl font-bold mb-4 text-indigo-700">📸 تطبيق تصوير وتعديل المنتجات المتكامل</h1>
 
-  <!-- أدوات التحكم -->
-  <div class="flex flex-wrap justify-center gap-2 mb-4">
-    <button id="removeBgBtn" class="bg-blue-600 text-white px-3 py-2 rounded">🧽 إزالة الخلفية</button>
-    <button id="colorBgBtn" class="bg-green-600 text-white px-3 py-2 rounded">🎨 لون الخلفية</button>
-    <button id="generateBgBtn" class="bg-purple-600 text-white px-3 py-2 rounded">🌄 توليد خلفية AI</button>
-    <button id="enhanceBtn" class="bg-orange-600 text-white px-3 py-2 rounded">✨ تحسين الصورة</button>
-    <button id="saveBtn" class="bg-gray-800 text-white px-3 py-2 rounded">💾 حفظ</button>
-  </div>
+<!-- أدوات الإدخال -->
+<input type="file" id="imageInput" accept="image/*" class="mb-4"/>
+<button id="cameraBtn" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4">📷 استخدام الكاميرا</button>
 
-  <!-- فلاتر -->
-  <div class="bg-white rounded-lg p-3 shadow-md max-w-md mx-auto">
-    <label>🌞 السطوع</label>
-    <input type="range" id="brightness" min="0.5" max="1.5" step="0.05" value="1" class="w-full">
-    <label>🌈 التشبع</label>
-    <input type="range" id="saturation" min="0" max="2" step="0.05" value="1" class="w-full">
-    <label>⚫ التباين</label>
-    <input type="range" id="contrast" min="0.5" max="1.5" step="0.05" value="1" class="w-full">
-    <label>🌀 الوضوح</label>
-    <input type="range" id="sharpness" min="0" max="1" step="0.05" value="0" class="w-full mb-3">
-  </div>
+<!-- لوحة العرض -->
+<div class="flex justify-center mb-4">
+  <canvas id="canvas"></canvas>
+</div>
 
-  <!-- التحكم بالاتجاه -->
-  <div class="mt-4 flex justify-center gap-3">
-    <button id="rotateBtn" class="bg-indigo-500 text-white px-3 py-2 rounded">🔁 تدوير</button>
-    <button id="flipHBtn" class="bg-indigo-500 text-white px-3 py-2 rounded">↔️ قلب أفقي</button>
-    <button id="flipVBtn" class="bg-indigo-500 text-white px-3 py-2 rounded">↕️ قلب عمودي</button>
-  </div>
+<!-- أدوات التحكم الأساسية -->
+<div class="flex flex-wrap justify-center gap-2 mb-4">
+  <button id="removeBgBtn" class="bg-blue-600 text-white px-3 py-2 rounded">🧽 إزالة الخلفية</button>
+  <button id="colorBgBtn" class="bg-green-600 text-white px-3 py-2 rounded">🎨 لون الخلفية</button>
+  <button id="generateBgBtn" class="bg-purple-600 text-white px-3 py-2 rounded">🌄 توليد خلفية AI</button>
+  <button id="enhanceBtn" class="bg-orange-600 text-white px-3 py-2 rounded">✨ تحسين الصورة</button>
+  <button id="addTextBtn" class="bg-pink-600 text-white px-3 py-2 rounded">📝 إضافة نص</button>
+  <button id="resetBtn" class="bg-red-600 text-white px-3 py-2 rounded">🔄 إعادة ضبط</button>
+  <button id="saveBtn" class="bg-gray-800 text-white px-3 py-2 rounded">💾 حفظ</button>
+</div>
 
-  <input type="color" id="colorPicker" hidden />
+<!-- فلاتر متقدمة -->
+<div class="bg-white rounded-lg p-3 shadow-md max-w-md mx-auto mb-4">
+  <label>🌞 السطوع</label>
+  <input type="range" id="brightness" min="0.5" max="1.5" step="0.05" value="1" class="w-full">
+  <label>🌈 التشبع</label>
+  <input type="range" id="saturation" min="0" max="2" step="0.05" value="1" class="w-full">
+  <label>⚫ التباين</label>
+  <input type="range" id="contrast" min="0.5" max="1.5" step="0.05" value="1" class="w-full">
+  <label>🌀 الوضوح</label>
+  <input type="range" id="sharpness" min="0" max="2" step="0.1" value="0" class="w-full">
+  <label>🌫️ الضبابية</label>
+  <input type="range" id="blur" min="0" max="5" step="0.2" value="0" class="w-full">
+</div>
 
-  <script>
-    let originalImage = null;
-    let canvas = document.getElementById('canvas');
-    let ctx = canvas.getContext('2d');
-    let net;
-    let rotation = 0;
-    let flipH = false;
-    let flipV = false;
+<!-- التحكم بالاتجاه والتحجيم -->
+<div class="mt-4 flex justify-center gap-3 mb-4 flex-wrap">
+  <button id="rotateBtn" class="bg-indigo-500 text-white px-3 py-2 rounded">🔁 تدوير</button>
+  <button id="flipHBtn" class="bg-indigo-500 text-white px-3 py-2 rounded">↔️ قلب أفقي</button>
+  <button id="flipVBtn" class="bg-indigo-500 text-white px-3 py-2 rounded">↕️ قلب عمودي</button>
+  <label>🔍 تكبير</label>
+  <input type="range" id="scale" min="0.5" max="2" step="0.05" value="1">
+</div>
 
-    // تحميل نموذج BodyPix
-    async function loadModel() {
-      net = await bodyPix.load();
-      console.log("✅ نموذج الذكاء الاصطناعي جاهز");
-    }
-    loadModel();
+<input type="color" id="colorPicker" hidden />
 
-    // تحميل صورة من الجهاز
-    document.getElementById('imageInput').addEventListener('change', e => {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => loadImage(reader.result);
-      reader.readAsDataURL(file);
-    });
+<script>
+let originalImage = null;
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let net;
+let rotation=0, flipH=false, flipV=false, scale=1;
+let currentBg = null;
+let texts = [];
 
-    // التقاط من الكاميرا
-    document.getElementById('cameraBtn').addEventListener('click', async () => {
-      const video = document.createElement('video');
-      video.autoplay = true;
-      document.body.appendChild(video);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-      await new Promise(res => video.onloadedmetadata = res);
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      originalImage = new Image();
-      originalImage.src = canvas.toDataURL();
-      stream.getTracks().forEach(track => track.stop());
-      video.remove();
-    });
+// تحميل نموذج BodyPix
+async function loadModel() {
+  net = await bodyPix.load({ multiplier:0.5 });
+  console.log("✅ نموذج الذكاء الاصطناعي جاهز");
+}
+loadModel();
 
-    function loadImage(src) {
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        originalImage = img;
-      };
-      img.src = src;
-    }
+// تحميل الصورة
+document.getElementById('imageInput').addEventListener('change', e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>loadImage(reader.result);
+  reader.readAsDataURL(file);
+});
 
-    // إزالة الخلفية
-    document.getElementById('removeBgBtn').addEventListener('click', async () => {
-      if (!originalImage) return alert("اختر صورة أولاً!");
-      const segmentation = await net.segmentPerson(originalImage);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = imageData.data;
-      for (let i = 0; i < pixels.length; i += 4) {
-        const n = i / 4;
-        if (segmentation.data[n] === 0) pixels[i + 3] = 0;
-      }
-      ctx.putImageData(imageData, 0, 0);
-    });
+// الكاميرا
+document.getElementById('cameraBtn').addEventListener('click', async ()=>{
+  const video=document.createElement('video');
+  video.autoplay=true; video.playsInline=true;
+  document.body.appendChild(video);
+  const stream=await navigator.mediaDevices.getUserMedia({video:true});
+  video.srcObject=stream;
+  await new Promise(res=>video.onloadedmetadata=res);
 
-    // لون الخلفية
-    document.getElementById('colorBgBtn').addEventListener('click', () => {
-      document.getElementById('colorPicker').click();
-    });
-    document.getElementById('colorPicker').addEventListener('input', e => {
-      const color = e.target.value;
-      const bg = document.createElement('canvas');
-      bg.width = canvas.width;
-      bg.height = canvas.height;
-      const bgCtx = bg.getContext('2d');
-      bgCtx.fillStyle = color;
-      bgCtx.fillRect(0, 0, bg.width, bg.height);
-      bgCtx.drawImage(canvas, 0, 0);
-      ctx.drawImage(bg, 0, 0);
-    });
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  ctx.drawImage(video,0,0);
+  originalImage=new Image();
+  originalImage.src=canvas.toDataURL();
+  stream.getTracks().forEach(track=>track.stop());
+  video.remove();
+});
 
-    // توليد خلفية AI (أكثر من 100 صورة)
-    const backgrounds = Array.from({length: 120}, (_, i) => `https://picsum.photos/800/600?random=${i+1}`);
+// تحميل الصورة
+function loadImage(src){
+  const img=new Image();
+  img.onload=()=>{
+    canvas.width=img.width;
+    canvas.height=img.height;
+    originalImage=img;
+    resetTransform();
+  }
+  img.src=src;
+}
 
-    document.getElementById('generateBgBtn').addEventListener('click', () => {
-      if (!originalImage) return alert("اختر صورة أولاً!");
-      const bg = new Image();
-      bg.crossOrigin = "anonymous";
-      bg.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // رسم الخلفية أولاً
-        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-        // رسم المنتج فوقها بشكل طبيعي
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
-      };
-      bg.src = backgrounds[Math.floor(Math.random() * backgrounds.length)];
-    });
+// إعادة ضبط الصورة
+function resetTransform(){
+  rotation=0; flipH=false; flipV=false; scale=1; currentBg=null; texts=[];
+  if(originalImage){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(originalImage,0,0);
+  }
+}
 
-    // تحسين الصورة
-    document.getElementById('enhanceBtn').addEventListener('click', () => {
-      if (!originalImage) return;
-      ctx.filter = 'brightness(1.2) contrast(1.2) saturate(1.3)';
-      ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
-      ctx.filter = 'none';
-    });
+// إزالة الخلفية
+document.getElementById('removeBgBtn').addEventListener('click', async ()=>{
+  if(!originalImage) return alert("اختر صورة أولاً!");
+  const segmentation=await net.segmentPerson(originalImage,{internalResolution:'medium',segmentationThreshold:0.7});
+  const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+  for(let i=0;i<imgData.data.length;i+=4){
+    const n=i/4;
+    if(segmentation.data[n]===0) imgData.data[i+3]=0;
+  }
+  ctx.putImageData(imgData,0,0);
+});
 
-    // الفلاتر اليدوية
-    const applyFilters = () => {
-      if (!originalImage) return;
-      const brightness = document.getElementById('brightness').value;
-      const saturation = document.getElementById('saturation').value;
-      const contrast = document.getElementById('contrast').value;
-      ctx.filter = `brightness(${brightness}) contrast(${contrast}) saturate(${saturation})`;
-      ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
-      ctx.filter = 'none';
-    };
-    ['brightness', 'saturation', 'contrast'].forEach(id =>
-      document.getElementById(id).addEventListener('input', applyFilters)
-    );
+// لون الخلفية
+document.getElementById('colorBgBtn').addEventListener('click',()=>document.getElementById('colorPicker').click());
+document.getElementById('colorPicker').addEventListener('input', e=>{
+  currentBg = e.target.value;
+  redraw();
+});
 
-    // تدوير / قلب
-    document.getElementById('rotateBtn').addEventListener('click', () => { rotation += 90; redraw(); });
-    document.getElementById('flipHBtn').addEventListener('click', () => { flipH = !flipH; redraw(); });
-    document.getElementById('flipVBtn').addEventListener('click', () => { flipV = !flipV; redraw(); });
+// توليد خلفية AI
+const backgrounds=Array.from({length:120},(_,i)=>`https://picsum.photos/800/600?random=${i+1}`);
+document.getElementById('generateBgBtn').addEventListener('click', ()=>{
+  currentBg=new Image();
+  currentBg.crossOrigin="anonymous";
+  currentBg.onload=redraw;
+  currentBg.src=backgrounds[Math.floor(Math.random()*backgrounds.length)];
+});
 
-    function redraw() {
-      if (!originalImage) return;
-      const temp = document.createElement('canvas');
-      temp.width = canvas.width;
-      temp.height = canvas.height;
-      const tempCtx = temp.getContext('2d');
-      tempCtx.translate(canvas.width / 2, canvas.height / 2);
-      tempCtx.rotate(rotation * Math.PI / 180);
-      tempCtx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-      tempCtx.drawImage(originalImage, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(temp, 0, 0);
-    }
+// تحسين الصورة
+document.getElementById('enhanceBtn').addEventListener('click', ()=>{
+  if(!originalImage) return;
+  ctx.filter='brightness(1.2) contrast(1.2) saturate(1.3)';
+  redraw();
+  ctx.filter='none';
+});
 
-    // حفظ الصورة
-    document.getElementById('saveBtn').addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = 'product_ai_photo.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
-  </script>
+// إضافة نصوص
+document.getElementById('addTextBtn').addEventListener('click', ()=>{
+  const txt=prompt("أدخل النص:");
+  if(txt) texts.push({text:txt,x:canvas.width/2,y:canvas.height/2,color:"#000",size:40});
+  redraw();
+});
+
+// تطبيق الفلاتر والتحجيم
+const applyFilters=()=>{
+  if(!originalImage) return;
+  const brightness=document.getElementById('brightness').value;
+  const saturation=document.getElementById('saturation').value;
+  const contrast=document.getElementById('contrast').value;
+  const sharpness=document.getElementById('sharpness').value;
+  const blur=document.getElementById('blur').value;
+  scale=document.getElementById('scale').value;
+  ctx.filter=`brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) blur(${blur}px)`;
+  redraw();
+  ctx.filter='none';
+};
+['brightness','saturation','contrast','sharpness','blur','scale'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',applyFilters);
+});
+
+// تدوير / قلب
+document.getElementById('rotateBtn').addEventListener('click',()=>{ rotation+=90; redraw(); });
+document.getElementById('flipHBtn').addEventListener('click',()=>{ flipH=!flipH; redraw(); });
+document.getElementById('flipVBtn').addEventListener('click',()=>{ flipV=!flipV; redraw(); });
+
+// رسم الصورة مع جميع التعديلات والنصوص
+function redraw(){
+  if(!originalImage) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // رسم الخلفية
+  if(currentBg){
+    if(typeof currentBg==="string") ctx.fillStyle=currentBg, ctx.fillRect(0,0,canvas.width,canvas.height);
+    else ctx.drawImage(currentBg,0,0,canvas.width,canvas.height);
+  }
+
+  // رسم المنتج
+  const tempCanvas=document.createElement('canvas');
+  tempCanvas.width=canvas.width; tempCanvas.height=canvas.height;
+  const tCtx=tempCanvas.getContext('2d');
+  tCtx.translate(canvas.width/2,canvas.height/2);
+  tCtx.rotate(rotation*Math.PI/180);
+  tCtx.scale(flipH?-1:1,flipV?-1:1);
+  tCtx.scale(scale,scale);
+  tCtx.drawImage(originalImage,-canvas.width/2,-canvas.height/2,canvas.width,canvas.height);
+  ctx.drawImage(tempCanvas,0,0);
+
+  // رسم النصوص
+  texts.forEach(t=>{
+    ctx.fillStyle=t.color; ctx.font=`${t.size}px sans-serif`;
+    ctx.textAlign='center'; ctx.fillText(t.text,t.x,t.y);
+  });
+}
+
+// حفظ الصورة
+document.getElementById('saveBtn').addEventListener('click',()=>{
+  const link=document.createElement('a');
+  link.download='product_ai_photo.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+});
+</script>
 </body>
 </html>
